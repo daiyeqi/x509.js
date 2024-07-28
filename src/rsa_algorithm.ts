@@ -10,7 +10,6 @@ import { HashedAlgorithm } from "./types";
  */
 @injectable()
 export class RsaAlgorithm implements IAlgorithm {
-
   public static createPssParams(hash: unknown, saltLength: number): asn1Rsa.RsaSaPssParams | null {
     const hashAlgorithm = RsaAlgorithm.getHashAlgorithm(hash);
     if (!hashAlgorithm) {
@@ -31,7 +30,8 @@ export class RsaAlgorithm implements IAlgorithm {
     const algProv = container.resolve<AlgorithmProvider>(diAlgorithmProvider);
     if (typeof alg === "string") {
       return algProv.toAsnAlgorithm({ name: alg });
-    } if (typeof alg === "object" && alg && "name" in alg) {
+    }
+    if (typeof alg === "object" && alg && "name" in alg) {
       return algProv.toAsnAlgorithm(alg as Algorithm);
     }
 
@@ -45,8 +45,12 @@ export class RsaAlgorithm implements IAlgorithm {
           let hash: string;
           if (typeof alg.hash === "string") {
             hash = alg.hash;
-          } else if (alg.hash && typeof alg.hash === "object"
-            && "name" in alg.hash && typeof alg.hash.name === "string") {
+          } else if (
+            alg.hash &&
+            typeof alg.hash === "object" &&
+            "name" in alg.hash &&
+            typeof alg.hash.name === "string"
+          ) {
             hash = alg.hash.name.toUpperCase();
           } else {
             throw new Error("Cannot get hash algorithm name");
@@ -76,7 +80,10 @@ export class RsaAlgorithm implements IAlgorithm {
             throw new Error("Cannot create PSS parameters");
           }
 
-          return new AlgorithmIdentifier({ algorithm: asn1Rsa.id_RSASSA_PSS, parameters: AsnConvert.serialize(pssParams) });
+          return new AlgorithmIdentifier({
+            algorithm: asn1Rsa.id_RSASSA_PSS,
+            parameters: AsnConvert.serialize(pssParams),
+          });
         } else {
           return new AlgorithmIdentifier({ algorithm: asn1Rsa.id_RSASSA_PSS, parameters: null });
         }
@@ -116,7 +123,6 @@ export class RsaAlgorithm implements IAlgorithm {
 
     return null;
   }
-
 }
 
 // register RSA algorithm provider as a singleton object

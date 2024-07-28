@@ -112,7 +112,6 @@ const ECDSA = "ECDSA";
  */
 @injectable()
 export class EcAlgorithm implements IAlgorithm {
-
   public static SECP256K1 = "1.3.132.0.10";
 
   public toAsnAlgorithm(alg: HashedAlgorithm | EcKeyGenParams): AlgorithmIdentifier | null {
@@ -129,6 +128,11 @@ export class EcAlgorithm implements IAlgorithm {
               return asn1Ecc.ecdsaWithSHA384;
             case "sha-512":
               return asn1Ecc.ecdsaWithSHA512;
+            case "SM3":
+              return new AlgorithmIdentifier({
+                algorithm: asn1Ecc.id_ecPublicKey,
+                parameters: AsnConvert.serialize(new asn1Ecc.ECParameters({ namedCurve: "1.2.156.10197.1.501" })),
+              });
           }
         } else if ("namedCurve" in alg) {
           let parameters = "";
@@ -144,6 +148,9 @@ export class EcAlgorithm implements IAlgorithm {
               break;
             case "P-521":
               parameters = asn1Ecc.id_secp521r1;
+              break;
+            case "SM2":
+              parameters = "1.2.156.10197.1.301";
               break;
             case brainpoolP160r1:
               parameters = idBrainpoolP160r1;
@@ -210,6 +217,8 @@ export class EcAlgorithm implements IAlgorithm {
         return { name: ECDSA, hash: { name: "SHA-384" } };
       case asn1Ecc.id_ecdsaWithSHA512:
         return { name: ECDSA, hash: { name: "SHA-512" } };
+      case "1.2.156.10197.1.501":
+        return { name: "SM2", hash: { name: "SM3" } };
       case asn1Ecc.id_ecPublicKey: {
         if (!alg.parameters) {
           throw new TypeError("Cannot get required parameters from EC algorithm");
@@ -224,6 +233,8 @@ export class EcAlgorithm implements IAlgorithm {
             return { name: ECDSA, namedCurve: "P-384" };
           case asn1Ecc.id_secp521r1:
             return { name: ECDSA, namedCurve: "P-521" };
+          case "1.2.156.10197.1.301":
+            return { name: "SM2", namedCurve: "SM2" };
           case idBrainpoolP160r1:
             return { name: ECDSA, namedCurve: brainpoolP160r1 };
           case idBrainpoolP160t1:
@@ -258,7 +269,6 @@ export class EcAlgorithm implements IAlgorithm {
 
     return null;
   }
-
 }
 
 // register EC algorithm provider as a singleton object

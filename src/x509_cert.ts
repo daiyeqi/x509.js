@@ -27,7 +27,6 @@ export interface X509CertificateVerifyParams {
  * Representation of X509 certificate
  */
 export class X509Certificate extends PemData<Certificate> implements IPublicKeyContainer {
-
   public static override NAME = "Certificate";
 
   protected readonly tag;
@@ -36,6 +35,11 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
    * ToBeSigned block of certificate
    */
   private tbs!: ArrayBuffer;
+
+  /**
+   * Gets a hexadecimal string of the serial number
+   */
+  public version!: number;
 
   /**
    * Gets a hexadecimal string of the serial number
@@ -120,6 +124,7 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
   protected onInit(asn: Certificate) {
     const tbs = asn.tbsCertificate;
     this.tbs = AsnConvert.serialize(tbs);
+    this.version = tbs.version;
     this.serialNumber = Convert.ToHex(tbs.serialNumber);
     this.subjectName = new Name(tbs.subject);
     this.subject = new Name(tbs.subject).toString();
@@ -140,7 +145,7 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
     this.notAfter = notAfter;
     this.extensions = [];
     if (tbs.extensions) {
-      this.extensions = tbs.extensions.map(o => ExtensionFactory.create(AsnConvert.serialize(o)));
+      this.extensions = tbs.extensions.map((o) => ExtensionFactory.create(AsnConvert.serialize(o)));
     }
     this.publicKey = new PublicKey(tbs.subjectPublicKeyInfo);
   }
@@ -156,8 +161,8 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
    * @param type Extension type
    * @returns Extension or null
    */
-  public getExtension<T extends Extension>(type: { new(raw: BufferSource): T; }): T | null;
-  public getExtension<T extends Extension>(type: { new(raw: BufferSource): T; } | string): T | null {
+  public getExtension<T extends Extension>(type: { new (raw: BufferSource): T }): T | null;
+  public getExtension<T extends Extension>(type: { new (raw: BufferSource): T } | string): T | null {
     for (const ext of this.extensions) {
       if (typeof type === "string") {
         if (ext.type === type) {
@@ -182,13 +187,13 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
    * Returns a list of extensions of specified type
    * @param type Extension type
    */
-  public getExtensions<T extends Extension>(type: { new(raw: BufferSource): T; }): T[];
+  public getExtensions<T extends Extension>(type: { new (raw: BufferSource): T }): T[];
   /**
    * Returns a list of extensions of specified type
    * @param type Extension identifier
    */
-  public getExtensions<T extends Extension>(type: string | { new(raw: BufferSource): T; }): T[] {
-    return this.extensions.filter(o => {
+  public getExtensions<T extends Extension>(type: string | { new (raw: BufferSource): T }): T[] {
+    return this.extensions.filter((o) => {
       if (typeof type === "string") {
         return o.type === type;
       } else {
@@ -263,10 +268,22 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
     }
   }
 
+  public async getSubjectSPKISHA256(): Promise<ArrayBuffer> {
+    let crypto: Crypto;
+    let algorithm = "SHA-256";
+    crypto ??= cryptoProvider.get();
+    this.subjectName.toArrayBuffer();
+    return await crypto.subtle.digest(
+      algorithm,
+      await new Blob([this.subjectName.toArrayBuffer(), this.publicKey.rawData]).arrayBuffer()
+    );
+  }
+
   /**
    * Returns a SHA-1 certificate thumbprint
    * @param crypto Crypto provider. Default is from CryptoProvider
    */
+  // public async getThumbprint(crypto?: Crypto): Promise<ArrayBuffer>;
   public async getThumbprint(crypto?: Crypto): Promise<ArrayBuffer>;
   /**
    * Returns a certificate thumbprint for specified mechanism
@@ -292,7 +309,7 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
   }
 
   public async isSelfSigned(crypto = cryptoProvider.get()): Promise<boolean> {
-    return this.subject === this.issuer && await this.verify({ signatureOnly: true }, crypto);
+    return this.subject === this.issuer && (await this.verify({ signatureOnly: true }, crypto));
   }
 
   public override toTextObject(): TextObject {
@@ -302,15 +319,15 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
 
     const tbs = cert.tbsCertificate;
     const data = new TextObject("", {
-      "Version": `${Version[tbs.version]} (${tbs.version})`,
+      Version: `${Version[tbs.version]} (${tbs.version})`,
       "Serial Number": tbs.serialNumber,
       "Signature Algorithm": TextConverter.serializeAlgorithm(tbs.signature),
-      "Issuer": this.issuer,
-      "Validity": new TextObject("", {
+      Issuer: this.issuer,
+      Validity: new TextObject("", {
         "Not Before": tbs.validity.notBefore.getTime(),
         "Not After": tbs.validity.notAfter.getTime(),
       }),
-      "Subject": this.subject,
+      Subject: this.subject,
       "Subject Public Key Info": this.publicKey,
     });
     if (tbs.issuerUniqueID) {
@@ -330,11 +347,10 @@ export class X509Certificate extends PemData<Certificate> implements IPublicKeyC
     obj["Data"] = data;
 
     obj["Signature"] = new TextObject("", {
-      "Algorithm": TextConverter.serializeAlgorithm(cert.signatureAlgorithm),
+      Algorithm: TextConverter.serializeAlgorithm(cert.signatureAlgorithm),
       "": cert.signatureValue,
     });
 
     return obj;
   }
-
 }

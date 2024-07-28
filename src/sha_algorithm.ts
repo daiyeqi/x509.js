@@ -8,7 +8,6 @@ import { id_sha1, id_sha256, id_sha384, id_sha512 } from "@peculiar/asn1-rsa";
  */
 @injectable()
 export class ShaAlgorithm implements IAlgorithm {
-
   public toAsnAlgorithm(alg: Algorithm): AlgorithmIdentifier | null {
     switch (alg.name.toLowerCase()) {
       case "sha-1":
@@ -19,6 +18,8 @@ export class ShaAlgorithm implements IAlgorithm {
         return new AlgorithmIdentifier({ algorithm: id_sha384 });
       case "sha-512":
         return new AlgorithmIdentifier({ algorithm: id_sha512 });
+      case "sm3":
+        return new AlgorithmIdentifier({ algorithm: "1.2.156.10197.1.401" });
     }
 
     return null;
@@ -34,11 +35,12 @@ export class ShaAlgorithm implements IAlgorithm {
         return { name: "SHA-384" };
       case id_sha512:
         return { name: "SHA-512" };
+      case "1.2.156.10197.1.401":
+        return { name: "SM3" };
     }
 
     return null;
   }
-
 }
 
 // register SHA algorithm provider as a singleton object

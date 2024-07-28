@@ -12,12 +12,19 @@ export interface TextObjectConvertible {
   toTextObject(): TextObject;
 }
 
-export type TextObjectItemType = string | number | boolean | Date | BufferSource | TextObject | TextObject[] | TextObjectConvertible;
+export type TextObjectItemType =
+  | string
+  | number
+  | boolean
+  | Date
+  | BufferSource
+  | TextObject
+  | TextObject[]
+  | TextObjectConvertible;
 
 const NAME = Symbol("name");
 const VALUE = Symbol("value");
 export class TextObject {
-
   public static NAME: typeof NAME = NAME;
   public static VALUE: typeof VALUE = VALUE;
 
@@ -61,11 +68,9 @@ export abstract class DefaultAlgorithmSerializer {
 
     return obj;
   }
-
 }
 
 export abstract class OidSerializer {
-
   public static items: Record<string, string> = {
     [asn1Rsa.id_sha1]: "sha1",
     [asn1Rsa.id_sha224]: "sha224",
@@ -73,23 +78,29 @@ export abstract class OidSerializer {
     [asn1Rsa.id_sha384]: "sha384",
     [asn1Rsa.id_sha512]: "sha512",
     [asn1Rsa.id_rsaEncryption]: "rsaEncryption",
-    [asn1Rsa.id_sha1WithRSAEncryption]: "sha1WithRSAEncryption",
-    [asn1Rsa.id_sha224WithRSAEncryption]: "sha224WithRSAEncryption",
-    [asn1Rsa.id_sha256WithRSAEncryption]: "sha256WithRSAEncryption",
-    [asn1Rsa.id_sha384WithRSAEncryption]: "sha384WithRSAEncryption",
-    [asn1Rsa.id_sha512WithRSAEncryption]: "sha512WithRSAEncryption",
+    [asn1Rsa.id_sha1WithRSAEncryption]: "SHA-1 with RSA Encryption",
+    [asn1Rsa.id_sha224WithRSAEncryption]: "SHA-224 with RSA Encryption",
+    [asn1Rsa.id_sha256WithRSAEncryption]: "SHA-256 with RSA Encryption",
+    [asn1Rsa.id_sha384WithRSAEncryption]: "SHA-384 with RSA Encryption",
+    [asn1Rsa.id_sha512WithRSAEncryption]: "SHA-512 with RSA Encryption",
     [asn1Ecc.id_ecPublicKey]: "ecPublicKey",
-    [asn1Ecc.id_ecdsaWithSHA1]: "ecdsaWithSHA1",
-    [asn1Ecc.id_ecdsaWithSHA224]: "ecdsaWithSHA224",
-    [asn1Ecc.id_ecdsaWithSHA256]: "ecdsaWithSHA256",
-    [asn1Ecc.id_ecdsaWithSHA384]: "ecdsaWithSHA384",
-    [asn1Ecc.id_ecdsaWithSHA512]: "ecdsaWithSHA512",
-    [asn1X509.id_kp_serverAuth]: "TLS WWW server authentication",
-    [asn1X509.id_kp_clientAuth]: "TLS WWW client authentication",
-    [asn1X509.id_kp_codeSigning]: "Code Signing",
-    [asn1X509.id_kp_emailProtection]: "E-mail Protection",
-    [asn1X509.id_kp_timeStamping]: "Time Stamping",
-    [asn1X509.id_kp_OCSPSigning]: "OCSP Signing",
+    [asn1Ecc.id_ecdsaWithSHA1]: "ECDSA Signature with SHA-1",
+    [asn1Ecc.id_ecdsaWithSHA224]: "ECDSA Signature with SHA-224",
+    [asn1Ecc.id_ecdsaWithSHA256]: "ECDSA Signature with SHA-256",
+    [asn1Ecc.id_ecdsaWithSHA384]: "ECDSA Signature with SHA-384",
+    [asn1Ecc.id_ecdsaWithSHA512]: "ECDSA Signature with SHA-512",
+    ["1.2.156.10197.1.501"]: "SM2 Signature with SM3",
+    [asn1X509.anyExtendedKeyUsage]: "任何扩展的密钥使用",
+    [asn1X509.id_kp_serverAuth]: "服务器认证",
+    [asn1X509.id_kp_clientAuth]: "客户端认证",
+    [asn1X509.id_kp_codeSigning]: "代码签名",
+    [asn1X509.id_kp_emailProtection]: "电子邮件保护",
+    [asn1X509.id_kp_timeStamping]: "时间戳",
+    [asn1X509.id_kp_OCSPSigning]: "OCSP 签名",
+    ["1.3.6.1.5.5.7.3.10"]: "DVCS 签名",
+    ["1.3.6.1.5.5.7.3.36"]: "文档签名",
+    ["1.3.6.1.4.1.311.10.3.12"]: "文档签名 (Microsoft)",
+    ["1.2.840.113583.1.1.5"]: "Adobe PDF 签名",
     [asn1Cms.id_signedData]: "Signed Data",
   };
 
@@ -104,7 +115,6 @@ export abstract class OidSerializer {
 }
 
 export abstract class TextConverter {
-
   public static oidSerializer = OidSerializer;
   public static algorithmSerializer: AlgorithmSerializer = DefaultAlgorithmSerializer;
 
@@ -136,9 +146,7 @@ export abstract class TextConverter {
 
       const value = obj[key];
       const keyValue = key ? `${key}: ` : "";
-      if (typeof value === "string" ||
-        typeof value === "number" ||
-        typeof value === "boolean") {
+      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
         res.push(`${pad}${keyValue}${value}`); // key: value
       } else if (value instanceof Date) {
         res.push(`${pad}${keyValue}${value.toUTCString()}`); // key: UTC(date)
@@ -176,7 +184,7 @@ export abstract class TextConverter {
     const res: string[] = [];
 
     // each hex raw should have 16 octets
-    for (let i = 0; i < view.length;) {
+    for (let i = 0; i < view.length; ) {
       const row: string[] = [];
       for (let j = 0; j < 16 && i < view.length; j++) {
         if (j === 8) {
@@ -195,5 +203,4 @@ export abstract class TextConverter {
   public static serializeAlgorithm(alg: asn1X509.AlgorithmIdentifier): TextObject {
     return this.algorithmSerializer.toTextObject(alg);
   }
-
 }

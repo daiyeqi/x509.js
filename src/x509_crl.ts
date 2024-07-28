@@ -9,10 +9,7 @@ import { ExtensionFactory } from "./extensions/extension_factory";
 import { PublicKey } from "./public_key";
 import { AlgorithmProvider, diAlgorithmProvider } from "./algorithm";
 import { AsnEncodedType, PemData } from "./pem_data";
-import {
-  diAsnSignatureFormatter,
-  IAsnSignatureFormatter,
-} from "./asn_signature_formatter";
+import { diAsnSignatureFormatter, IAsnSignatureFormatter } from "./asn_signature_formatter";
 import { X509Certificate } from "./x509_cert";
 import { X509CrlEntry } from "./x509_crl_entry";
 import { PemConverter } from "./pem_converter";
@@ -125,13 +122,11 @@ export class X509Crl extends PemData<CertificateList> {
     this.thisUpdate = thisUpdate;
     const nextUpdate = tbs.nextUpdate?.getTime();
     this.nextUpdate = nextUpdate;
-    this.entries = tbs.revokedCertificates?.map(o => new X509CrlEntry(AsnConvert.serialize(o))) || [];
+    this.entries = tbs.revokedCertificates?.map((o) => new X509CrlEntry(AsnConvert.serialize(o))) || [];
 
     this.extensions = [];
     if (tbs.crlExtensions) {
-      this.extensions = tbs.crlExtensions.map((o) =>
-        ExtensionFactory.create(AsnConvert.serialize(o))
-      );
+      this.extensions = tbs.crlExtensions.map((o) => ExtensionFactory.create(AsnConvert.serialize(o)));
     }
   }
 
@@ -146,12 +141,8 @@ export class X509Crl extends PemData<CertificateList> {
    * @param type Extension type
    * @returns Extension or null
    */
-  public getExtension<T extends Extension>(type: {
-    new(raw: BufferSource): T;
-  }): T | null;
-  public getExtension<T extends Extension>(
-    type: { new(raw: BufferSource): T; } | string
-  ): T | null {
+  public getExtension<T extends Extension>(type: { new (raw: BufferSource): T }): T | null;
+  public getExtension<T extends Extension>(type: { new (raw: BufferSource): T } | string): T | null {
     for (const ext of this.extensions) {
       if (typeof type === "string") {
         if (ext.type === type) {
@@ -176,16 +167,12 @@ export class X509Crl extends PemData<CertificateList> {
    * Returns a list of extensions of specified type
    * @param type Extension type
    */
-  public getExtensions<T extends Extension>(type: {
-    new(raw: BufferSource): T;
-  }): T[];
+  public getExtensions<T extends Extension>(type: { new (raw: BufferSource): T }): T[];
   /**
    * Returns a list of extensions of specified type
    * @param type Extension identifier
    */
-  public getExtensions<T extends Extension>(
-    type: string | { new(raw: BufferSource): T; }
-  ): T[] {
+  public getExtensions<T extends Extension>(type: string | { new (raw: BufferSource): T }): T[] {
     return this.extensions.filter((o) => {
       if (typeof type === "string") {
         return o.type === type;
@@ -200,10 +187,7 @@ export class X509Crl extends PemData<CertificateList> {
    * @param params Verification parameters
    * @param crypto Crypto provider. Default is from CryptoProvider
    */
-  public async verify(
-    params: X509CrlVerifyParams,
-    crypto = cryptoProvider.get()
-  ) {
+  public async verify(params: X509CrlVerifyParams, crypto = cryptoProvider.get()) {
     if (!this.certListSignatureAlgorithm.isEqual(this.tbsCertListSignatureAlgorithm)) {
       throw new Error("algorithm identifier in the sequence tbsCertList and CertificateList mismatch");
     }
@@ -265,10 +249,7 @@ export class X509Crl extends PemData<CertificateList> {
    * @param algorithm Hash algorithm
    * @param crypto Crypto provider. Default is from CryptoProvider
    */
-  public async getThumbprint(
-    algorithm: globalThis.AlgorithmIdentifier,
-    crypto?: Crypto
-  ): Promise<ArrayBuffer>;
+  public async getThumbprint(algorithm: globalThis.AlgorithmIdentifier, crypto?: Crypto): Promise<ArrayBuffer>;
   public async getThumbprint(...args: any[]) {
     let crypto: Crypto;
     let algorithm = "SHA-1";

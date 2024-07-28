@@ -7,7 +7,6 @@ export interface UnknownAlgorithm extends Algorithm {
 }
 
 export interface IAlgorithm {
-
   /**
    * Converts WebCrypto algorithm to ASN.1 algorithm
    * @param alg WebCrypto algorithm
@@ -21,7 +20,6 @@ export interface IAlgorithm {
    * @returns WebCrypto algorithm or null
    */
   toWebAlgorithm(alg: AlgorithmIdentifier): Algorithm | null;
-
 }
 
 /**
@@ -30,7 +28,6 @@ export interface IAlgorithm {
 export const diAlgorithm = "crypto.algorithm";
 
 export class AlgorithmProvider {
-
   /**
    * Returns all registered algorithm providers
    */
@@ -94,7 +91,6 @@ export class AlgorithmProvider {
 
     return unknown;
   }
-
 }
 
 export const diAlgorithmProvider = "crypto.algorithmProvider";

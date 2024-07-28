@@ -1,11 +1,9 @@
-
 import * as assert from "node:assert";
 import "reflect-metadata";
 import { container } from "tsyringe";
 import { AlgorithmProvider, diAlgorithmProvider } from "../src";
 
 context("AlgorithmProvider", () => {
-
   let algorithmProvider: AlgorithmProvider;
   before(() => {
     algorithmProvider = container.resolve<AlgorithmProvider>(diAlgorithmProvider);
@@ -58,11 +56,14 @@ context("AlgorithmProvider", () => {
     });
 
     it("should throw error if hash algorithm is not supported", async () => {
-      assert.throws(() => algorithmProvider.toAsnAlgorithm({
-        name: "RSASSA-PKCS1-v1_5",
-        hash: "SHA-2",
-      } as Algorithm), /Cannot convert WebCrypto algorithm to ASN.1 algorithm/);
+      assert.throws(
+        () =>
+          algorithmProvider.toAsnAlgorithm({
+            name: "RSASSA-PKCS1-v1_5",
+            hash: "SHA-2",
+          } as Algorithm),
+        /Cannot convert WebCrypto algorithm to ASN.1 algorithm/
+      );
     });
   });
-
 });

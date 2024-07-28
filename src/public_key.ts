@@ -20,7 +20,6 @@ export type PublicKeyType = PublicKey | CryptoKey | IPublicKeyContainer | Buffer
  * Representation of Subject Public Key Info
  */
 export class PublicKey extends PemData<SubjectPublicKeyInfo> {
-
   protected readonly tag: string;
 
   /**
@@ -59,7 +58,11 @@ export class PublicKey extends PemData<SubjectPublicKeyInfo> {
    * @param keyUsages A list of key usages
    * @param crypto Crypto provider. Default is from CryptoProvider
    */
-  public async export(algorithm: Algorithm | EcKeyImportParams | RsaHashedImportParams, keyUsages: KeyUsage[], crypto?: Crypto): Promise<CryptoKey>;
+  public async export(
+    algorithm: Algorithm | EcKeyImportParams | RsaHashedImportParams,
+    keyUsages: KeyUsage[],
+    crypto?: Crypto
+  ): Promise<CryptoKey>;
   public async export(...args: any[]) {
     let crypto: Crypto;
     let keyUsages: KeyUsage[] = ["verify"];
@@ -89,16 +92,15 @@ export class PublicKey extends PemData<SubjectPublicKeyInfo> {
 
   protected onInit(asn: SubjectPublicKeyInfo) {
     const algProv = container.resolve<AlgorithmProvider>(diAlgorithmProvider);
-    const algorithm = this.algorithm = algProv.toWebAlgorithm(asn.algorithm) as any;
+    const algorithm = (this.algorithm = algProv.toWebAlgorithm(asn.algorithm) as any);
     switch (asn.algorithm.algorithm) {
-      case id_rsaEncryption:
-        {
-          const rsaPublicKey = AsnConvert.parse(asn.subjectPublicKey, RSAPublicKey);
-          const modulus = BufferSourceConverter.toUint8Array(rsaPublicKey.modulus);
-          algorithm.publicExponent = BufferSourceConverter.toUint8Array(rsaPublicKey.publicExponent);
-          algorithm.modulusLength = (!modulus[0] ? modulus.slice(1) : modulus).byteLength << 3;
-          break;
-        }
+      case id_rsaEncryption: {
+        const rsaPublicKey = AsnConvert.parse(asn.subjectPublicKey, RSAPublicKey);
+        const modulus = BufferSourceConverter.toUint8Array(rsaPublicKey.modulus);
+        algorithm.publicExponent = BufferSourceConverter.toUint8Array(rsaPublicKey.publicExponent);
+        algorithm.modulusLength = (!modulus[0] ? modulus.slice(1) : modulus).byteLength << 3;
+        break;
+      }
     }
   }
 
@@ -146,6 +148,17 @@ export class PublicKey extends PemData<SubjectPublicKeyInfo> {
     return await crypto.subtle.digest("SHA-1", asn.subjectPublicKey);
   }
 
+  public print() {
+    const algorithm = this.algorithm as any;
+    if (algorithm.name == "RSASSA-PKCS1-v1_5" || algorithm.name == "RSA-PSS") {
+      return "RSA " + algorithm.modulusLength + " bits";
+    } else if (algorithm.name == "ECDSA") {
+      return algorithm.name + " " + algorithm.namedCurve;
+    } else {
+      return algorithm.name;
+    }
+  }
+
   public override toTextObject(): TextObject {
     const obj = this.toTextObjectEmpty();
 
@@ -164,7 +177,6 @@ export class PublicKey extends PemData<SubjectPublicKeyInfo> {
 
     return obj;
   }
-
 }
 
 function convertSpkiToRsaPkcs1(asnSpki: SubjectPublicKeyInfo, raw: ArrayBuffer) {

@@ -28,7 +28,6 @@ export interface X509ChainBuilderParams {
  * ```
  */
 export class X509ChainBuilder {
-
   public certificates: X509Certificate[] = [];
 
   public constructor(params: X509ChainBuilderParams = {}) {
@@ -42,7 +41,7 @@ export class X509ChainBuilder {
 
     let current: X509Certificate | null = cert;
     // eslint-disable-next-line no-cond-assign
-    while (current = await this.findIssuer(current, crypto)) {
+    while ((current = await this.findIssuer(current, crypto))) {
       // check out circular dependency
       const thumbprint = await current.getThumbprint(crypto);
       for (const item of chain) {
@@ -59,7 +58,7 @@ export class X509ChainBuilder {
   }
 
   private async findIssuer(cert: X509Certificate, crypto = cryptoProvider.get()) {
-    if (!await cert.isSelfSigned(crypto)) {
+    if (!(await cert.isSelfSigned(crypto))) {
       const akiExt = cert.getExtension<AuthorityKeyIdentifierExtension>(asn1X509.id_ce_authorityKeyIdentifier);
       for (const item of this.certificates) {
         if (item.subject !== cert.issuer) {
@@ -74,8 +73,13 @@ export class X509ChainBuilder {
             }
           } else if (akiExt.certId) {
             const sanExt = item.getExtension<SubjectKeyIdentifierExtension>(asn1X509.id_ce_subjectAltName);
-            if (sanExt &&
-              !(akiExt.certId.serialNumber === item.serialNumber && isEqual(AsnConvert.serialize(akiExt.certId.name), AsnConvert.serialize(sanExt)))) {
+            if (
+              sanExt &&
+              !(
+                akiExt.certId.serialNumber === item.serialNumber &&
+                isEqual(AsnConvert.serialize(akiExt.certId.name), AsnConvert.serialize(sanExt))
+              )
+            ) {
               continue;
             }
           }
@@ -97,5 +101,4 @@ export class X509ChainBuilder {
 
     return null;
   }
-
 }
